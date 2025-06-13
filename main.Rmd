@@ -1,0 +1,10 @@
+---
+title: "main"
+output: html_document
+---
+
+```{r}
+source("cod/setup.R")
+runApp('cod')
+```
+
