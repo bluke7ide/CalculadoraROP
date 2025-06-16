@@ -1,0 +1,152 @@
+
+```{r}
+vanuTemporal <- function(edad_inicio, sexo, tabla, r = 0.036, m = 12, anno_objetivo = 2025) {
+  # Obtener esperanza de vida a los 65 años
+  fila_ex65 <- tabla[tabla$edad == 65 & tabla$sex == sexo, ]
+  annos_disp <- unique(fila_ex65$year)
+  anno_base <- annos_disp[which.min(abs(annos_disp - anno_objetivo))]
+  ex65 <- fila_ex65$ex[fila_ex65$year == anno_base][1]
+  resultados <- data.frame()
+  for (edad in edad_inicio:90) {
+    n <- ceiling(ex65) - (edad - 65)
+    if (n <= 0) {
+      resultados <- rbind(resultados, data.frame(Edad = edad, VANU_a_ex65 = 0))
+      next
+    }
+    px <- numeric(n + 1)
+    px[1] <- 1
+    for (t in 1:n) {
+      edad_t <- edad + t - 1
+      anno_t <- anno_base + t - 1
+      qx_t <- tabla$qx[tabla$edad == edad_t & tabla$sex == sexo & tabla$year == anno_t]
+      qx_t <- ifelse(length(qx_t) == 0 || is.na(qx_t), 1, qx_t)
+      px[t + 1] <- px[t] * (1 - qx_t)
+    }
+    v <- 1 / (1 + r)
+    parte1 <- sum(px[1:n] * v^(0:(n - 1)))
+    parte2 <- (m - 1) / (2 * m) * (1 - px[n + 1] * v^n)
+    vanu <- (parte1*12 - parte2*12)
+    resultados <- rbind(resultados, data.frame(Edad = edad, VANU_a_ex65 = round(vanu, 9)))
+  }
+  return(resultados)
+}
+```
+
+```{r}
+vanuCompleta <- function(edad_inicio, sexo, tabla, r = 0.036, m = 12, anno_objetivo = 2025) {
+  resultados <- data.frame()
+  for (edad in edad_inicio:120) {
+    fila_ex <- tabla[tabla$edad == edad & tabla$sex == sexo, ]
+    annos_disp <- unique(fila_ex$year)
+    anno_base <- annos_disp[which.min(abs(annos_disp - anno_objetivo))]
+    ex <- fila_ex$ex[fila_ex$year == anno_base][1]
+    n <- 120 - edad
+    if (n <= 0) {
+      resultados <- rbind(resultados, data.frame(Edad = edad, VANU = 0))
+      next
+    }
+    px <- numeric(n + 1)
+    px[1] <- 1
+    for (t in 1:n) {
+      edad_t <- edad + t - 1
+      anno_t <- anno_base + t - 1
+      qx_t <- tabla$qx[tabla$edad == edad_t & tabla$sex == sexo & tabla$year == anno_t]
+      qx_t <- ifelse(length(qx_t) == 0 || is.na(qx_t), 1, qx_t)
+      px[t + 1] <- px[t] * (1 - qx_t)
+    }
+    v <- 1 / (1 + r)
+    parte1 <- sum(px[1:n] * v^(0:(n - 1)))
+    parte2 <- (m - 1) / (2 * m) * (1 - px[n + 1] * v^n)
+    vanu <- parte1 * m - parte2 * m
+    resultados <- rbind(resultados, data.frame(Edad = edad, VANU = round(vanu, 9)))
+  }
+  return(resultados)
+}
+
+```
+
+```{r}
+# Cargar datos
+tabla <- read.csv("tavid2000-2150 - qxhasta2150-v2018.csv")
+vanuHombreTemporal <- vanuTemporal(edad_inicio = 65, sexo = 1, tabla = tabla)
+vanuHombreCompleta <- vanuCompleta(edad_inicio = 65, sexo = 1, tabla = tabla)
+# Parámetros
+reserva_inicial <- 2744205382.12
+edad_retiro <- 65
+minimo_ivm <- 30638.35
+tasas <- c(
+  0.1092, 0.0766, 0.1223, 0.0741, 0.0704, 0.0186, 0.1126, -0.0289, -0.0542, 0.0797,
+  0.1154, 0.0473, 0.0518, 0.0494, 0.0469, 0.1290, 0.0722, 0.0743, -0.0533, 0.1203,
+  0.1431, 0.1646, 0.0722, 0.0422, 0.0705, 0.1110, 0.0710, 0.1086, 0.0037, 0.1102,
+  0.1004, 0.1203, 0.1178, 0.0664, 0.0582, 0.0760, 0.0599, 0.1175, 0.1385, 0.0389,
+  0.0280, 0.1134, 0.1590, 0.0977, 0.1471, 0.1140, 0.0436, 0.1063, 0.0562, 0.1169, 0.0596
+)
+vanus <- vanuHombreCompleta
+n <- min(length(tasas), nrow(vanus))
+resultados <- data.frame(
+  Edad = edad_retiro:(edad_retiro + n - 1),
+  Reserva_Ini = numeric(n),
+  Pension_Mensual = numeric(n),
+  TasaRend = tasas[1:n],
+  Rendimientos = numeric(n),
+  Reserva_Final = numeric(n)
+)
+
+# Año 1
+resultados$Reserva_Ini[1] <- reserva_inicial
+resultados$Pension_Mensual[1] <- max(minimo_ivm, reserva_inicial / vanus$VANU[1])
+pension_anual <- 12 * resultados$Pension_Mensual[1]
+tasa1 <- resultados$TasaRend[1]
+rend1 <- reserva_inicial * tasa1 - (pension_anual * tasa1 / 2)
+resultados$Rendimientos[1] <- rend1
+resultados$Reserva_Final[1] <- max(0, reserva_inicial + rend1 - pension_anual)
+
+# Años siguientes
+for (i in 2:n) {
+  resultados$Reserva_Ini[i] <- resultados$Reserva_Final[i - 1]
+  resultados$Pension_Mensual[i] <- max(minimo_ivm, resultados$Reserva_Ini[i] / vanus$VANU[i])
+  pension_anual <- 12 * resultados$Pension_Mensual[i]
+  tasa <- resultados$TasaRend[i]
+  rend <- resultados$Reserva_Ini[i] * tasa - (pension_anual * tasa / 2)
+  resultados$Rendimientos[i] <- rend
+  resultados$Reserva_Final[i] <- max(0, resultados$Reserva_Ini[i] + rend - pension_anual)
+}
+print(resultados)
+
+tasas <- c(
+  0.1159, 0.0864, 0.0761, 0.0919, 0.0746, 0.0415, 0.0813, 0.0715, 0.0942, 0.1172,
+  0.0668, 0.0851, 0.1401, 0.0779, 0.0531, 0.1028, 0.1130, 0.1025, 0.0919, 0.0796,
+  0.1094, 0.0891, 0.1226, 0.0241, 0.0885, 0.0521, 0.0974, 0.0495, 0.1636, 0.1463,
+  0.1598, 0.1415, -0.0384, 0.0782, -0.0078, 0.0530, 0.0920, 0.1032, 0.0398, 0.0849,
+  0.0237, 0.0767, 0.0237, 0.1460, -0.0033, 0.0995, 0.0113, 0.1514, 0.0733, 0.1259, 0.1093
+)
+resultados <- data.frame(
+  Edad = edad_retiro:(edad_retiro + n - 1),
+  Reserva_Ini = numeric(n),
+  Pension_Mensual = numeric(n),
+  TasaRend = tasas[1:n],
+  Rendimientos = numeric(n),
+  Reserva_Final = numeric(n)
+)
+
+# Año 1
+resultados$Reserva_Ini[1] <- reserva_inicial
+resultados$Pension_Mensual[1] <- max(minimo_ivm, reserva_inicial / vanus[1])
+pension_anual <- 12 * resultados$Pension_Mensual[1]
+tasa1 <- resultados$TasaRend[1]
+resultados$Rendimientos[1] <- reserva_inicial * tasa1 - (pension_anual * tasa1 / 2)
+resultados$Reserva_Final[1] <- max(0, reserva_inicial + resultados$Rendimientos[1] - pension_anual)
+
+# Años siguientes
+for (i in 2:n) {
+  resultados$Reserva_Ini[i] <- resultados$Reserva_Final[i - 1]
+  resultados$Pension_Mensual[i] <- max(minimo_ivm, resultados$Reserva_Ini[i] / vanus[i])
+  pension_anual <- 12 * resultados$Pension_Mensual[i]
+  tasa <- resultados$TasaRend[i]
+  rend <- resultados$Reserva_Ini[i] * tasa - (pension_anual * tasa / 2)
+  resultados$Rendimientos[i] <- rend
+  resultados$Reserva_Final[i] <- max(0, resultados$Reserva_Ini[i] + rend - pension_anual)
+}
+print(resultados)
+```
+
