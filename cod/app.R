@@ -4,7 +4,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       numericInput("monto", "Monto acumulado:", value = 100, min = 0),
-      h5("Rendimientos de los años (%)", style = "font-weight: bold; color: #333;"),
+      h5("Rendimientos de los años", style = "font-weight: bold; color: #333;"),
       fluidRow(
         column(4, numericInput("tasa1", "2023", value = 5, min = 0, max = 100)),
         column(4, numericInput("tasa2", "2024", value = 4, min = 0, max = 100)),
