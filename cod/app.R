@@ -1,3 +1,5 @@
+library(shiny)
+
 ui <- fluidPage(
   titlePanel(div("Calculadora del Régimen Obligatorio de Pensiones (ROP)", style = "background-color: #0073e6; color: white; padding: 10px; border-radius: 5px;")),
   
@@ -17,46 +19,75 @@ ui <- fluidPage(
     ),
     
     mainPanel(
-      h3("Resultado del Cálculo", style = "font-weight: bold; margin-top: 20px; color: #0073e6;"),
+      h3("Información General", style = "font-weight: bold; margin-top: 20px; color: #0073e6;"),
+      
       wellPanel(
         tags$h4("Expectativa de vida", style = "font-weight: bold; color: #0073e6;"),
         textOutput("expectativa")
       ),
-      wellPanel(
-        tags$h4("Monto inicial de pensión", style = "font-weight: bold; color: #0073e6;"),
-        fluidRow(
-          column(4, textOutput("retiro_programado")),
-          column(4, textOutput("renta_permanente")),
-          column(4, textOutput("renta_temporal"))
+      
+      h3("Seleccionar tipo de retiro", style = "font-weight: bold; margin-top: 30px; color: #0073e6;"),
+      
+      tabsetPanel(
+        selected = NULL,  # Ninguna pestaña activa al inicio
+        tabsetPanel(
+          selected = NULL,  # Ninguna pestaña activa al inicio
+          tabPanel("Retiro Programado",
+                   textOutput("retiro_programado")
+          ),
+          tabPanel("Renta Permanente",
+                   textOutput("renta_permanente")
+          ),
+          tabPanel("Renta Temporal",
+                   textOutput("renta_temporal")
+          )
         )
+        
       )
     )
+    
   )
 )
 
 server <- function(input, output) {
+  # Variables reactivas para almacenar los resultados
+  valores <- reactiveValues(
+    edad = NULL,
+    expectativa = NULL,
+    retiro_programado = NULL,
+    renta_permanente = NULL,
+    renta_temporal = NULL
+  )
+  
   observeEvent(input$calcular, {
-    expectativa <- input$edad + 20
-    retiro_programado <- input$monto * 0.03
-    renta_permanente <- input$monto * 0.02
-    renta_temporal <- input$monto * 0.04
-    
-    output$expectativa <- renderText({
-      paste("Su expectativa de vida condicionado a que tiene", input$edad, "años es de:", expectativa)
-    })
-    
-    output$retiro_programado <- renderText({
-      paste("Retiro Programado: ", round(retiro_programado, 2))
-    })
-    
-    output$renta_permanente <- renderText({
-      paste("Renta Permanente: ", round(renta_permanente, 2))
-    })
-    
-    output$renta_temporal <- renderText({
-      paste("Renta Temporal: ", round(renta_temporal, 2))
-    })
+    valores$edad <- input$edad
+    valores$expectativa <- input$edad + 20
+    valores$retiro_programado <- input$monto * 0.03
+    valores$renta_permanente <- input$monto * 0.02
+    valores$renta_temporal <- input$monto * 0.04
+  })
+  
+  # Mostrar resultados solo cuando existan
+  output$expectativa <- renderText({
+    req(valores$expectativa, valores$edad)
+    paste("Su expectativa de vida condicionado a que tiene", valores$edad, "años es de:", valores$expectativa)
+  })
+  
+  output$retiro_programado <- renderText({
+    req(valores$retiro_programado)
+    paste("Retiro Programado: ", round(valores$retiro_programado, 2))
+  })
+  
+  output$renta_permanente <- renderText({
+    req(valores$renta_permanente)
+    paste("Renta Permanente: ", round(valores$renta_permanente, 2))
+  })
+  
+  output$renta_temporal <- renderText({
+    req(valores$renta_temporal)
+    paste("Renta Temporal: ", round(valores$renta_temporal, 2))
   })
 }
 
 shinyApp(ui = ui, server = server)
+
