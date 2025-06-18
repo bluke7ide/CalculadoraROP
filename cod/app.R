@@ -33,11 +33,11 @@ ui <- fluidPage(
           tabPanel("Retiro Programado",
                    textOutput("retiro_programado")
           ),
-          tabPanel("Renta Permanente",
-                   textOutput("renta_permanente")
-          ),
           tabPanel("Renta Temporal",
                    textOutput("renta_temporal")
+          ),
+          tabPanel("Renta Permanente",
+                   textOutput("renta_permanente")
           )
         )
       )
@@ -74,14 +74,14 @@ server <- function(input, output) {
     paste("Retiro Programado: ", round(valores$retiro_programado, 2))
   })
   
-  output$renta_permanente <- renderText({
-    req(valores$renta_permanente)
-    paste("Renta Permanente: ", round(valores$renta_permanente, 2))
-  })
-  
   output$renta_temporal <- renderText({
     req(valores$renta_temporal)
     paste("Renta Temporal: ", round(valores$renta_temporal, 2))
+  })
+  
+  output$renta_permanente <- renderText({
+    req(valores$renta_permanente)
+    paste("Renta Permanente: ", round(valores$renta_permanente, 2))
   })
 }
 
