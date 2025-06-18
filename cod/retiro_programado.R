@@ -58,3 +58,118 @@ vanuCompleta <- function(edad_inicio, sexo, tabla, r = 0.036, m = 12, anno_objet
   }
   return(resultados)
 }
+
+graficos <- function(resultados) {
+  # 1. Gráfico de Reserva Final (como gráfico de barras)
+  g1 <- ggplot(resultados, aes(x = Edad, y = Reserva_Final)) +
+    geom_col(width = 0.7, fill = "steelblue") +
+    labs(
+      title = "Reserva de Pensión",
+      x = "Edad",
+      y = "Reserva Final (colones)"
+    ) +
+    theme_minimal()
+  
+  # 2. Gráfico de Pensión Mensual
+  g2 <- ggplot(resultados, aes(x = Edad, y = Pension_Mensual)) +
+    geom_line(color = "steelblue", size = 1.2) +
+    labs(
+      title = "Pensión Mensual Pagada por Año",
+      x = "Edad",
+      y = "Pensión Mensual (colones)"
+    ) +
+    theme_minimal()
+  
+  # 3. Gráfico de Rendimientos Anuales
+  g3 <- ggplot(resultados, aes(x = Edad, y = Rendimientos)) +
+    geom_line(color = "darkgreen", size = 1.2) +
+    labs(
+      title = "Rendimientos Anuales de la Reserva",
+      x = "Edad",
+      y = "Rendimientos (colones)"
+    ) +
+    theme_minimal()
+  
+  return(list(
+    Reserva = g1,
+    Pension = g2,
+    Rendimiento = g3
+  ))
+}
+
+simular_reserva <- function(reserva_inicial, vanus, tasas, minimo_ivm = 30638.35, edad_retiro = 65) {
+  n <- min(length(tasas), nrow(vanus))
+  
+  resultados <- data.frame(
+    Edad = edad_retiro:(edad_retiro + n - 1),
+    Reserva_Ini = numeric(n),
+    Pension_Mensual = numeric(n),
+    TasaRend = tasas[1:n],
+    Rendimientos = numeric(n),
+    Reserva_Final = numeric(n)
+  )
+  
+  # Año 1
+  resultados$Reserva_Ini[1] <- reserva_inicial
+  resultados$Pension_Mensual[1] <- max(minimo_ivm, reserva_inicial / vanus$VANU[1])
+  pension_anual <- 12 * resultados$Pension_Mensual[1]
+  tasa1 <- resultados$TasaRend[1]
+  rend1 <- reserva_inicial * tasa1 - (pension_anual * tasa1 / 2)
+  resultados$Rendimientos[1] <- rend1
+  resultados$Reserva_Final[1] <- max(0, reserva_inicial + rend1 - pension_anual)
+  
+  # Años siguientes
+  for (i in 2:n) {
+    resultados$Reserva_Ini[i] <- resultados$Reserva_Final[i - 1]
+    resultados$Pension_Mensual[i] <- max(minimo_ivm, resultados$Reserva_Ini[i] / vanus$VANU[i])
+    pension_anual <- 12 * resultados$Pension_Mensual[i]
+    tasa <- resultados$TasaRend[i]
+    rend <- resultados$Reserva_Ini[i] * tasa - (pension_anual * tasa / 2)
+    resultados$Rendimientos[i] <- rend
+    resultados$Reserva_Final[i] <- max(0, resultados$Reserva_Ini[i] + rend - pension_anual)
+  }
+  
+  return(resultados)
+}
+
+intereses <- function(x){
+  set.seed(2025)
+  tasas <- sapply(x:115, function(x)
+    ifelse(runif(1) < 0.05,
+           qnorm(runif(1), mean = -0.05, sd = 0.01),
+           qnorm(runif(1), mean = 0.09, sd = 0.03)))
+  return(tasas)
+}
+
+simular_reserva_temporal <- function(reserva_inicial, vanus_temporal, tasas, minimo_ivm = 30638.35) {
+  n <- nrow(vanus_temporal)
+  resultados <- data.frame(
+    Edad = vanus_temporal$Edad,
+    Reserva_Ini = numeric(n),
+    Pension_Mensual = numeric(n),
+    TasaRend = tasas[1:n],
+    Rendimientos = numeric(n),
+    Reserva_Final = numeric(n)
+  )
+  
+  resultados$Reserva_Ini[1] <- reserva_inicial
+  resultados$Pension_Mensual[1] <- max(minimo_ivm, reserva_inicial / vanus_temporal$VANU_a_ex65[1])
+  pension_anual <- 12 * resultados$Pension_Mensual[1]
+  tasa1 <- resultados$TasaRend[1]
+  rend1 <- reserva_inicial * tasa1 - (pension_anual * tasa1 / 2)
+  resultados$Rendimientos[1] <- rend1
+  resultados$Reserva_Final[1] <- max(0, reserva_inicial + rend1 - pension_anual)
+  
+  for (i in 2:n) {
+    resultados$Reserva_Ini[i] <- resultados$Reserva_Final[i - 1]
+    resultados$Pension_Mensual[i] <- max(minimo_ivm, resultados$Reserva_Ini[i] / vanus_temporal$VANU_a_ex65[i])
+    pension_anual <- 12 * resultados$Pension_Mensual[i]
+    tasa <- resultados$TasaRend[i]
+    rend <- resultados$Reserva_Ini[i] * tasa - (pension_anual * tasa / 2)
+    resultados$Rendimientos[i] <- rend
+    resultados$Reserva_Final[i] <- max(0, resultados$Reserva_Ini[i] + rend - pension_anual)
+  }
+  
+  return(resultados)
+}
+

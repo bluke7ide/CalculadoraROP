@@ -31,10 +31,20 @@ ui <- fluidPage(
         tabsetPanel(
           selected = NULL,  # Ninguna pestaña activa al inicio
           tabPanel("Retiro Programado",
-                   textOutput("retiro_programado")
+                   h4("Tabla de resultados"),
+                   tableOutput("tabla_programado"),
+                   h4("Gráficos"),
+                   plotOutput("graf_reserva"),
+                   plotOutput("graf_pension"),
+                   plotOutput("graf_rendimiento")
           ),
           tabPanel("Renta Temporal",
-                   textOutput("renta_temporal")
+                   h4("Tabla de resultados"),
+                   tableOutput("tabla_temporal_sim"),
+                   h4("Gráficos"),
+                   plotOutput("graf_reserva_temp"),
+                   plotOutput("graf_pension_temp"),
+                   plotOutput("graf_rendimiento_temp")
           ),
           tabPanel("Renta Permanente",
                    textOutput("renta_permanente")
@@ -46,13 +56,22 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
+  # (ANTONI) LEER MIS FUNCIONES
+  source("retiro_programado.R")
   # Variables reactivas para almacenar los resultados
   valores <- reactiveValues(
     edad = NULL,
     expectativa = NULL,
     retiro_programado = NULL,
     renta_permanente = NULL,
-    renta_temporal = NULL
+    renta_temporal = NULL,
+    
+    ### ANTHONY
+    tabla_programado = NULL,
+    tabla_temporal = NULL,
+    tabla_temporal_sim = NULL,
+    graficos = NULL,
+    graficos_temporal = NULL
   )
   
   observeEvent(input$calcular, {
@@ -61,6 +80,32 @@ server <- function(input, output) {
     valores$retiro_programado <- input$monto * 0.03
     valores$renta_permanente <- input$monto * 0.02
     valores$renta_temporal <- input$monto * 0.04
+    sexo_cod <- ifelse(input$sexo == "Masculino", 1, 2)
+    tasas_usuario <- intereses(input$edad)
+    edad_retiro <- input$edad + (input$jub - 2025)
+    
+    ### ANTHONY
+    # VANU Completa y simulación
+    vanu_comp <- vanuCompleta(edad_inicio = edad_retiro, sexo = sexo_cod, tabla = tabla, anno_objetivo = input$jub)
+    
+    vanu_temp <- vanuTemporal(edad_inicio = edad_retiro, sexo = sexo_cod, tabla = tabla, anno_objetivo = input$jub)
+    
+    sim <- simular_reserva(input$monto, vanu_comp, tasas_usuario, edad_retiro = edad_retiro)
+    
+    sim_temp <- simular_reserva_temporal(input$monto, vanu_temp, tasas_usuario)
+    plots <- graficos(sim)
+    
+    # VANU Temporal y su simulación
+    plots_temp <- graficos(sim_temp)
+    
+    # Guardar resultados
+    valores$tabla_programado <- sim
+    valores$graficos <- plots
+    valores$tabla_temporal <- vanu_temp
+    valores$tabla_temporal_sim <- sim_temp
+    valores$graficos_temporal <- plots_temp
+    ###
+    
   })
   
   # Mostrar resultados solo cuando existan
@@ -83,6 +128,54 @@ server <- function(input, output) {
     req(valores$renta_permanente)
     paste("Renta Permanente: ", round(valores$renta_permanente, 2))
   })
+  
+  ### ANTHONY
+  
+  output$tabla_programado <- renderTable({
+    req(valores$tabla_programado)
+    valores$tabla_programado
+  })
+  
+  output$graf_reserva <- renderPlot({
+    req(valores$graficos)
+    print(valores$graficos$Reserva)
+  })
+  
+  output$graf_pension <- renderPlot({
+    req(valores$graficos)
+    print(valores$graficos$Pension)
+  })
+  
+  output$graf_rendimiento <- renderPlot({
+    req(valores$graficos)
+    print(valores$graficos$Rendimiento)
+  })
+  
+  output$tabla_temporal <- renderTable({
+    req(valores$tabla_temporal)
+    valores$tabla_temporal
+  })
+  
+  output$tabla_temporal_sim <- renderTable({
+    req(valores$tabla_temporal_sim)
+    valores$tabla_temporal_sim
+  })
+  
+  output$graf_reserva_temp <- renderPlot({
+    req(valores$graficos_temporal)
+    print(valores$graficos_temporal$Reserva)
+  })
+  
+  output$graf_pension_temp <- renderPlot({
+    req(valores$graficos_temporal)
+    print(valores$graficos_temporal$Pension)
+  })
+  
+  output$graf_rendimiento_temp <- renderPlot({
+    req(valores$graficos_temporal)
+    print(valores$graficos_temporal$Rendimiento)
+  })
+  
 }
 
 shinyApp(ui = ui, server = server)
