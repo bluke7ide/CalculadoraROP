@@ -67,7 +67,7 @@ vanuCompleta <- function(edad_inicio, sexo, tabla, r = 0.036, m = 12, anno_objet
 
 ```{r}
 # Cargar datos
-tabla <- read.csv("tavid2000-2150 - qxhasta2150-v2018.csv")
+# tabla <- read_excel("data/tavid2000-2150.xls")
 vanuHombreTemporal <- vanuTemporal(edad_inicio = 65, sexo = 1, tabla = tabla)
 vanuHombreCompleta <- vanuCompleta(edad_inicio = 65, sexo = 1, tabla = tabla)
 # Parámetros
@@ -131,7 +131,7 @@ resultados <- data.frame(
 
 # Año 1
 resultados$Reserva_Ini[1] <- reserva_inicial
-resultados$Pension_Mensual[1] <- max(minimo_ivm, reserva_inicial / vanus[1])
+resultados$Pension_Mensual[1] <- max(minimo_ivm, reserva_inicial / vanus[1,2])
 pension_anual <- 12 * resultados$Pension_Mensual[1]
 tasa1 <- resultados$TasaRend[1]
 resultados$Rendimientos[1] <- reserva_inicial * tasa1 - (pension_anual * tasa1 / 2)
@@ -140,7 +140,7 @@ resultados$Reserva_Final[1] <- max(0, reserva_inicial + resultados$Rendimientos[
 # Años siguientes
 for (i in 2:n) {
   resultados$Reserva_Ini[i] <- resultados$Reserva_Final[i - 1]
-  resultados$Pension_Mensual[i] <- max(minimo_ivm, resultados$Reserva_Ini[i] / vanus[i])
+  resultados$Pension_Mensual[i] <- max(minimo_ivm, resultados$Reserva_Ini[i] / vanus[i,2])
   pension_anual <- 12 * resultados$Pension_Mensual[i]
   tasa <- resultados$TasaRend[i]
   rend <- resultados$Reserva_Ini[i] * tasa - (pension_anual * tasa / 2)
