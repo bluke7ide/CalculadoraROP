@@ -15,3 +15,5 @@ renta_permanente <- function(rendimientos, x, monto, año_jub, vec_rend){ # no s
   }
   return(res)
 }
+
+graficos <- 

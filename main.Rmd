@@ -9,8 +9,37 @@ runApp('cod')
 ```
 
 ```{r}
+fig <- ggplot() +
+  geom_line(
+    data = renta_permanente(c(1e6, 2e6, 5e6), 65, 38e6, 0, 0.036),
+    aes(x = edad, y = pension, color = "Tasa fija 3.6%"),
+    linewidth = 1
+  ) +
+  geom_line(
+    data = renta_permanente(c(1e6, 2e6, 5e6), 65, 38e6, 0, intereses(65)),
+    aes(x = edad, y = pension, color = "Tasa variable"),
+    linewidth = 1
+  ) +
+  scale_color_manual(
+    name = "Escenarios",
+    values = c(
+      "Tasa fija 3.6%" = "darkorange",
+      "Tasa variable" = "darkgreen"
+    )
+  ) +
+  labs(
+    title = "Trayectorias del monto de pensión",
+    x = "Edad",
+    y = "Monto de la pensión"
+  ) +
+  theme_minimal()
+ggplotly(fig)
+```
+
+
+```{r}
 x <- 65
-sim <- sapply(1:1000, function(x) renta_permanente(c(1e6,2e6,5e6), 65, 38e6, 0, intereses(65))$pension)
+sim <- sapply(1:500, function(x) renta_permanente(c(1e6,2e6,5e6), 65, 38e6, 0, intereses(65))$pension/1e3)
 df_res <- data.frame(Tiempo = x:115,
                      Media = sapply(1:51, function(y) mean(sim[y,])),
                      IC_inf = sapply(1:(115-x+1), function(y) quantile(sim[y,], 0.05)),
@@ -29,7 +58,7 @@ df_res_lineas <- df_res %>% mutate(Tipo = "Media")
 
 fig <- ggplot() +
   geom_line(data = df_long,
-            aes(x = Tiempo, y = Pension/1e3, group = Simulacion, color = "Simulaciones"),
+            aes(x = Tiempo, y = Pension, group = Simulacion, color = "Simulaciones"),
             alpha = 0.2, linewidth = 0.2) +
   geom_ribbon(data = df_res, 
               aes(x = Tiempo, ymin = IC_inf, ymax = IC_sup, fill = "IC"),
@@ -37,7 +66,7 @@ fig <- ggplot() +
   geom_line(data = df_res_lineas, 
             aes(x = Tiempo, y = Media, color = "Media"),
             linewidth = 1) +
-  geom_hline(aes(yintercept = 30638.35/1e3, color = "Monto mínimo"),
+  geom_hline(aes(yintercept = 30.63835, color = "Monto"),
              linetype = "dashed", linewidth = 0.8) +
   scale_color_manual(name = "",
                      values = c(
@@ -46,10 +75,17 @@ fig <- ggplot() +
                        "Monto mínimo" = "black"
                      )) +
   scale_fill_manual(name = "", values = c("IC" = "green")) +
-  
   labs(title = "Trayectorias simuladas del monto de pensión en miles",
        x = "Edad", y = "Monto de la pensión") +
   theme_minimal() 
-fig %>% ggplotly()
+p <- ggplotly(fig)
+
+for(i in seq_along(p$x$data)) {
+  nm <- p$x$data[[i]]$name
+  p$x$data[[i]]$name <- sub("^\\(([^,]+),.*\\)$", "\\1", nm)
+}
+p
+
+
 ```
 

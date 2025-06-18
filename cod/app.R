@@ -3,16 +3,15 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      numericInput("monto", "Monto acumulado:", value = 100, min = 0),
-      h5("Rendimientos de los años", style = "font-weight: bold; color: #333;"),
-      fluidRow(
-        column(4, numericInput("tasa1", "2023", value = 5, min = 0, max = 100)),
-        column(4, numericInput("tasa2", "2024", value = 4, min = 0, max = 100)),
-        column(4, numericInput("tasa3", "2025", value = 3, min = 0, max = 100))
-      ),
-      numericInput("edad", "Edad actual:", value = 20, min = 18, max = 100),
+      h4("Montos de los rendimientos de los años:", style = "font-weight: bold; color: #0073e6;"),
+      numericInput("2023", "2023", value = 15203642, min = 18, max = 100),
+      numericInput("2024", "2024", value = 9546136, min = 18, max = 100),
+      numericInput("2025", "2025", value = 25462189, min = 18, max = 100),
+      h4("Características:", style = "font-weight: bold; color: #0073e6;"),
+      numericInput("monto", "Monto acumulado final:", value = 100000000, min = 0),
+      numericInput("edad", "Edad actual:", value = 65, min = 18, max = 100),
       selectInput("sexo", "Sexo:", choices = c("Masculino", "Femenino")),
-      numericInput("jub", "Año de jubilación:", value = 0, min = 1950, max = 2100),
+      numericInput("jub", "Año de jubilación:", value = 2025, min = 1950, max = 2100),
       actionButton("calcular", "Calcular", style = "background-color: #0073e6; color: white; border-radius: 5px;")
     ),
     
@@ -24,23 +23,30 @@ ui <- fluidPage(
         textOutput("expectativa")
       ),
       
-      h3("Seleccionar tipo de retiro", style = "font-weight: bold; margin-top: 30px; color: #0073e6;"),
+      h3("Tipo de retiro", style = "font-weight: bold; margin-top: 30px; color: #0073e6;"),
       
       tabsetPanel(
         selected = NULL,  # Ninguna pestaña activa al inicio
         tabsetPanel(
           selected = NULL,  # Ninguna pestaña activa al inicio
+          tabPanel("Información",
+                   h4("Instrucciones de uso"),
+                   p("Para utilizar esta herramienta, siga los siguientes pasos:"),
+                   tags$ol(
+                     tags$li("Complete los datos en el panel izquierdo."),
+                     tags$li("Presione el botón \"Calcular\"."),
+                     tags$li("Acceda a la pestaña de Renta que sea de su interés.")
+                   ),
+                   br(),
+                   p("Cada pestaña mostrará los resultados correspondientes al tipo de renta seleccionado.")
+          ),
           tabPanel("Retiro Programado",
-                   h4("Tabla de resultados"),
-                   tableOutput("tabla_programado"),
                    h4("Gráficos"),
                    plotOutput("graf_reserva"),
                    plotOutput("graf_pension"),
                    plotOutput("graf_rendimiento")
           ),
           tabPanel("Renta Temporal",
-                   h4("Tabla de resultados"),
-                   tableOutput("tabla_temporal_sim"),
                    h4("Gráficos"),
                    plotOutput("graf_reserva_temp"),
                    plotOutput("graf_pension_temp"),
@@ -55,11 +61,9 @@ ui <- fluidPage(
   )
 )
 
-tabla <- read.csv("tavid2000-2150 - qxhasta2150-v2018.csv")
-
 server <- function(input, output) {
   # (ANTONI) LEER MIS FUNCIONES
-  source("retiro_programado.R")
+  
   # Variables reactivas para almacenar los resultados
   valores <- reactiveValues(
     edad = NULL,
@@ -76,12 +80,12 @@ server <- function(input, output) {
     graficos_temporal = NULL
   )
   observeEvent(input$calcular, {
+    sexo_cod <- ifelse(input$sexo == "Masculino", 1, 2)
     valores$edad <- input$edad
-    valores$expectativa <- input$edad + 20
+    valores$expectativa <- tabla[tabla$edad == input$edad & tabla$year == 2025 & tabla$sex == sexo_cod, 7]
     valores$retiro_programado <- input$monto * 0.03
     valores$renta_permanente <- input$monto * 0.02
     valores$renta_temporal <- input$monto * 0.04
-    sexo_cod <- ifelse(input$sexo == "Masculino", 1, 2)
     tasas_usuario <- intereses(input$edad)
     edad_retiro <- input$edad + (input$jub - 2025)
     
@@ -112,7 +116,7 @@ server <- function(input, output) {
   # Mostrar resultados solo cuando existan
   output$expectativa <- renderText({
     req(valores$expectativa, valores$edad)
-    paste("Su expectativa de vida condicionado a que tiene", valores$edad, "años es de:", valores$expectativa)
+    paste("Su expectativa de vida condicionado a que tiene", valores$edad, "años es de", valores$expectativa, "años")
   })
   
   output$retiro_programado <- renderText({
@@ -132,11 +136,6 @@ server <- function(input, output) {
   
   ### ANTHONY
   
-  output$tabla_programado <- renderTable({
-    req(valores$tabla_programado)
-    valores$tabla_programado
-  })
-  
   output$graf_reserva <- renderPlot({
     req(valores$graficos)
     print(valores$graficos$Reserva)
@@ -152,15 +151,6 @@ server <- function(input, output) {
     print(valores$graficos$Rendimiento)
   })
   
-  output$tabla_temporal <- renderTable({
-    req(valores$tabla_temporal)
-    valores$tabla_temporal
-  })
-  
-  output$tabla_temporal_sim <- renderTable({
-    req(valores$tabla_temporal_sim)
-    valores$tabla_temporal_sim
-  })
   
   output$graf_reserva_temp <- renderPlot({
     req(valores$graficos_temporal)
