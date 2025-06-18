@@ -1,5 +1,3 @@
-library(shiny)
-
 ui <- fluidPage(
   titlePanel(div("Calculadora del Régimen Obligatorio de Pensiones (ROP)", style = "background-color: #0073e6; color: white; padding: 10px; border-radius: 5px;")),
   
@@ -42,10 +40,8 @@ ui <- fluidPage(
                    textOutput("renta_temporal")
           )
         )
-        
       )
     )
-    
   )
 )
 
