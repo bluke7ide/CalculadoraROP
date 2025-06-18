@@ -55,6 +55,8 @@ ui <- fluidPage(
   )
 )
 
+tabla <- read.csv("tavid2000-2150 - qxhasta2150-v2018.csv")
+
 server <- function(input, output) {
   # (ANTONI) LEER MIS FUNCIONES
   source("retiro_programado.R")
@@ -73,7 +75,6 @@ server <- function(input, output) {
     graficos = NULL,
     graficos_temporal = NULL
   )
-  
   observeEvent(input$calcular, {
     valores$edad <- input$edad
     valores$expectativa <- input$edad + 20
