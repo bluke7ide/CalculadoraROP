@@ -7,7 +7,11 @@ renta_permanente <- function(rendimientos, x, monto, año_jub, vec_rend){ # no s
   res$Reserva_Final[1] <- monto + res$Rendimientos[1] - 12*res$Pension_Mensual[1]
   for(i in 2:(115-x+1)){
     if((i-1)%%3 == 0){
-      res$Pension_Mensual[1:3+(i-1)] <- max(sum(res$Rendimientos[1:3+(i-4)])/36, 30638.35)
+      if(115-x+1-i <3){
+       res$Pension_Mensual[i:(115-x+1)] <- max(sum(res$Rendimientos[1:3+(i-4)])/36, 30638.35)
+      } else {
+        res$Pension_Mensual[1:3+(i-1)] <- max(sum(res$Rendimientos[1:3+(i-4)])/36, 30638.35)
+      }
     }
     res$res_inicial[i] <- res$Reserva_Final[i-1]
     res$Rendimientos[i] <- (res$res_inicial[i]-6*res$Pension_Mensual[i])*res$tasa[i]
