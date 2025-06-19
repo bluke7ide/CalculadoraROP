@@ -4,9 +4,9 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       h4("Montos de los rendimientos de los años:", style = "font-weight: bold; color: #0073e6;"),
-      numericInput("2023", "2023", value = 15203642, min = 18, max = 100),
-      numericInput("2024", "2024", value = 9546136, min = 18, max = 100),
-      numericInput("2025", "2025", value = 25462189, min = 18, max = 100),
+      numericInput("r2023", "2023", value = 15203642, min = 18, max = 100),
+      numericInput("r2024", "2024", value = 9546136, min = 18, max = 100),
+      numericInput("r2025", "2025", value = 25462189, min = 18, max = 100),
       h4("Características:", style = "font-weight: bold; color: #0073e6;"),
       numericInput("monto", "Monto acumulado final:", value = 100000000, min = 0),
       numericInput("edad", "Edad actual:", value = 65, min = 18, max = 100),
@@ -34,7 +34,7 @@ ui <- fluidPage(
                    p("Para utilizar esta herramienta, siga los siguientes pasos:"),
                    tags$ol(
                      tags$li("Complete los datos en el panel izquierdo."),
-                     tags$li("Presione el botón \"Calcular\"."),
+                     tags$li("Presione el botón \"Calcular\" y espere a que se muestre su expectativa de vida."),
                      tags$li("Acceda a la pestaña de Renta que sea de su interés.")
                    ),
                    br(),
@@ -42,18 +42,18 @@ ui <- fluidPage(
           ),
           tabPanel("Retiro Programado",
                    h4("Gráficos"),
-                   plotOutput("graf_reserva"),
-                   plotOutput("graf_pension"),
-                   plotOutput("graf_rendimiento")
+                   plotlyOutput("graf_reserva1"),
+                   plotlyOutput("graf_pension1")
           ),
           tabPanel("Renta Temporal",
                    h4("Gráficos"),
-                   plotOutput("graf_reserva_temp"),
-                   plotOutput("graf_pension_temp"),
-                   plotOutput("graf_rendimiento_temp")
+                   plotlyOutput("graf_reserva2"),
+                   plotlyOutput("graf_pension2")
           ),
           tabPanel("Renta Permanente",
-                   textOutput("renta_permanente")
+                   h4("Gráficos"),
+                   plotlyOutput("graf_reserva3"),
+                   plotlyOutput("graf_pension3")
           )
         )
       )
@@ -95,21 +95,25 @@ server <- function(input, output) {
     
     vanu_temp <- vanuTemporal(edad_inicio = edad_retiro, sexo = sexo_cod, tabla = tabla, anno_objetivo = input$jub)
     
-    sim <- simular_reserva(input$monto, vanu_comp, tasas_usuario, edad_retiro = edad_retiro)
+    sim1 <- simular_reserva(input$monto, vanu_comp, tasas_usuario, edad_retiro = edad_retiro)
     
-    sim_temp <- simular_reserva_temporal(input$monto, vanu_temp, tasas_usuario)
-    plots <- graficos(sim)
-    
-    # VANU Temporal y su simulación
-    plots_temp <- graficos(sim_temp)
+    sim2 <- simular_reserva_temporal(input$monto, vanu_temp, tasas_usuario)
+    sim3 <- renta_permanente(c(input$r2023, input$r2024, input$r2025), input$edad, input$monto, input$jub, tasas_usuario)
+
     
     # Guardar resultados
-    valores$tabla_programado <- sim
-    valores$graficos <- plots
+    valores$tabla_programado <- sim1
     valores$tabla_temporal <- vanu_temp
-    valores$tabla_temporal_sim <- sim_temp
-    valores$graficos_temporal <- plots_temp
-    ###
+    valores$tabla_temporal_sim <- sim2
+    
+    plots1 <- graficos(sim1)
+    plots2 <- graficos(sim2)
+    plots3 <- graficos(sim3)
+    
+    valores$graficos1 <- plots1
+    valores$graficos2 <- plots2
+    valores$graficos3 <- plots3
+    
     
   })
   
@@ -134,38 +138,27 @@ server <- function(input, output) {
     paste("Renta Permanente: ", round(valores$renta_permanente, 2))
   })
   
-  ### ANTHONY
-  
-  output$graf_reserva <- renderPlot({
-    req(valores$graficos)
-    print(valores$graficos$Reserva)
+  # Gráficos
+  output$graf_reserva1 <- renderPlotly({
+    valores$graficos1$Reserva
+  })
+  output$graf_pension1 <- renderPlotly({
+    valores$graficos1$Pension
+  })
+  output$graf_reserva2 <- renderPlotly({
+    valores$graficos2$Reserva
+  })
+  output$graf_pension2 <- renderPlotly({
+    valores$graficos2$Pension
+  })
+  output$graf_reserva3 <- renderPlotly({
+    valores$graficos3$Reserva
+  })
+  output$graf_pension3 <- renderPlotly({
+    valores$graficos3$Pension
   })
   
-  output$graf_pension <- renderPlot({
-    req(valores$graficos)
-    print(valores$graficos$Pension)
-  })
   
-  output$graf_rendimiento <- renderPlot({
-    req(valores$graficos)
-    print(valores$graficos$Rendimiento)
-  })
-  
-  
-  output$graf_reserva_temp <- renderPlot({
-    req(valores$graficos_temporal)
-    print(valores$graficos_temporal$Reserva)
-  })
-  
-  output$graf_pension_temp <- renderPlot({
-    req(valores$graficos_temporal)
-    print(valores$graficos_temporal$Pension)
-  })
-  
-  output$graf_rendimiento_temp <- renderPlot({
-    req(valores$graficos_temporal)
-    print(valores$graficos_temporal$Rendimiento)
-  })
   
 }
 

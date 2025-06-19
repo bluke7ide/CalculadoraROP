@@ -3,7 +3,7 @@ title: "main"
 output: html_document
 ---
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 source("cod/setup.R")
 runApp('cod')
 ```
@@ -39,7 +39,7 @@ ggplotly(fig)
 
 ```{r}
 x <- 65
-sim <- sapply(1:500, function(x) renta_permanente(c(1e6,2e6,5e6), 65, 38e6, 0, intereses(65))$pension/1e3)
+sim <- sapply(1:1000, function(x) renta_permanente(c(1e6,2e6,5e6), 65, 38e6, 2025, intereses(65))$Pension_Mensual/1e3)
 df_res <- data.frame(Tiempo = x:115,
                      Media = sapply(1:51, function(y) mean(sim[y,])),
                      IC_inf = sapply(1:(115-x+1), function(y) quantile(sim[y,], 0.05)),

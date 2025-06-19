@@ -80,20 +80,9 @@ graficos <- function(resultados) {
     ) +
     theme_minimal()
   
-  # 3. Gráfico de Rendimientos Anuales
-  g3 <- ggplot(resultados, aes(x = Edad, y = Rendimientos)) +
-    geom_line(color = "darkgreen", size = 1.2) +
-    labs(
-      title = "Rendimientos Anuales de la Reserva",
-      x = "Edad",
-      y = "Rendimientos (colones)"
-    ) +
-    theme_minimal()
-  
   return(list(
-    Reserva = g1,
-    Pension = g2,
-    Rendimiento = g3
+    Reserva = ggplotly(g1),
+    Pension = ggplotly(g2)
   ))
 }
 
