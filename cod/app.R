@@ -10,6 +10,10 @@ ui <- fluidPage(
       h4("Características:", style = "font-weight: bold; color: #0073e6;"),
       numericInput("monto", "Monto acumulado final:", value = 100000000, min = 0),
       numericInput("edad", "Edad actual:", value = 65, min = 18, max = 100),
+      radioButtons("modo_tasa", "Modo de tasa de interés:",
+                   choices = c("Aleatoria", "Constante 3.6%"),
+                   selected = "Aleatoria",
+                   inline = TRUE),
       selectInput("sexo", "Sexo:", choices = c("Masculino", "Femenino")),
       #numericInput("jub", "Año de jubilación:", value = 2025, min = 1950, max = 2100),
       actionButton("calcular", "Calcular", style = "background-color: #0073e6; color: white; border-radius: 5px;")
@@ -91,7 +95,12 @@ server <- function(input, output) {
     valores$retiro_programado <- input$monto * 0.03
     valores$renta_permanente <- input$monto * 0.02
     valores$renta_temporal <- input$monto * 0.04
-    tasas_usuario <- intereses(input$edad)
+    if (input$modo_tasa == "Aleatoria") {
+      tasas_usuario <- intereses(input$edad)
+    } else {
+      tasas_usuario <- rep(0.036, 115 - input$edad + 1)  # constante anual 3.6%
+    }
+    
     edad_retiro <- input$edad + (2025 - 2025)
     
     ### ANTHONY
