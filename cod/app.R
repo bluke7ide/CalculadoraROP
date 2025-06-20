@@ -16,12 +16,9 @@ ui <- fluidPage(
     ),
     
     mainPanel(
-      h3("Información General", style = "font-weight: bold; margin-top: 20px; color: #0073e6;"),
-      
-      wellPanel(
-        tags$h4("Expectativa de vida", style = "font-weight: bold; color: #0073e6;"),
-        textOutput("expectativa")
-      ),
+      h3("Expectativa de vida", style = "font-weight: bold; color: #0073e6;"),
+      textOutput("expectativa"),
+
       
       h3("Tipo de retiro", style = "font-weight: bold; margin-top: 30px; color: #0073e6;"),
       
