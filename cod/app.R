@@ -11,7 +11,7 @@ ui <- fluidPage(
       numericInput("monto", "Monto acumulado final:", value = 100000000, min = 0),
       numericInput("edad", "Edad actual:", value = 65, min = 18, max = 100),
       selectInput("sexo", "Sexo:", choices = c("Masculino", "Femenino")),
-      numericInput("jub", "Año de jubilación:", value = 2025, min = 1950, max = 2100),
+      #numericInput("jub", "Año de jubilación:", value = 2025, min = 1950, max = 2100),
       actionButton("calcular", "Calcular", style = "background-color: #0073e6; color: white; border-radius: 5px;")
     ),
     
@@ -38,14 +38,22 @@ ui <- fluidPage(
                    p("Cada pestaña mostrará los resultados correspondientes al tipo de renta seleccionado.")
           ),
           tabPanel("Retiro Programado",
+                   h5(textOutput("pension_actual_rp")),
+                   h5(textOutput("pension_prox_rp")),
                    h4("Gráficos"),
                    plotlyOutput("graf_reserva1"),
                    plotlyOutput("graf_pension1")
+
+                   
           ),
           tabPanel("Renta Temporal",
+                   h5(textOutput("pension_actual_rt")),
+                   h5(textOutput("pension_prox_rt")),
                    h4("Gráficos"),
                    plotlyOutput("graf_reserva2"),
                    plotlyOutput("graf_pension2")
+
+                   
           ),
           tabPanel("Renta Permanente",
                    h4("Gráficos"),
@@ -84,19 +92,27 @@ server <- function(input, output) {
     valores$renta_permanente <- input$monto * 0.02
     valores$renta_temporal <- input$monto * 0.04
     tasas_usuario <- intereses(input$edad)
-    edad_retiro <- input$edad + (input$jub - 2025)
+    edad_retiro <- input$edad + (2025 - 2025)
     
     ### ANTHONY
     # VANU Completa y simulación
-    vanu_comp <- vanuCompleta(edad_inicio = edad_retiro, sexo = sexo_cod, tabla = tabla, anno_objetivo = input$jub)
+    vanu_comp <- vanuCompleta(edad_inicio = edad_retiro, sexo = sexo_cod, tabla = tabla, anno_objetivo = 2025)
     
-    vanu_temp <- vanuTemporal(edad_inicio = edad_retiro, sexo = sexo_cod, tabla = tabla, anno_objetivo = input$jub)
+    vanu_temp <- vanuTemporal(edad_inicio = edad_retiro, sexo = sexo_cod, tabla = tabla, anno_objetivo = 2025)
     
     sim1 <- simular_reserva(input$monto, vanu_comp, tasas_usuario, edad_retiro = edad_retiro)
     
     sim2 <- simular_reserva_temporal(input$monto, vanu_temp, tasas_usuario)
-    sim3 <- renta_permanente(c(input$r2023, input$r2024, input$r2025), input$edad, input$monto, input$jub, tasas_usuario)
+    sim3 <- renta_permanente(c(input$r2023, input$r2024, input$r2025), input$edad, input$monto, 2025, tasas_usuario)
 
+    
+    # Pensiones para mostrar
+    valores$pension_actual_rp <- sim1$Pension[1]
+    valores$pension_prox_rp <- sim1$Pension[2]
+    
+    valores$pension_actual_rt <- sim2$Pension[1]
+    valores$pension_prox_rt <- sim2$Pension[2]
+    
     
     # Guardar resultados
     valores$tabla_programado <- sim1
@@ -155,6 +171,27 @@ server <- function(input, output) {
     valores$graficos3$Pension
   })
   
+  # Retiro Programado
+  output$pension_actual_rp <- renderText({
+    req(valores$pension_actual_rp)
+    paste("Pensión mensual este año:", round(valores$pension_actual_rp, 2), "colones")
+  })
+  
+  output$pension_prox_rp <- renderText({
+    req(valores$pension_prox_rp)
+    paste("Pensión mensual el próximo año:", round(valores$pension_prox_rp, 2), "colones")
+  })
+  
+  # Renta Temporal
+  output$pension_actual_rt <- renderText({
+    req(valores$pension_actual_rt)
+    paste("Pensión mensual para este año:", round(valores$pension_actual_rt, 2), "colones")
+  })
+  
+  output$pension_prox_rt <- renderText({
+    req(valores$pension_prox_rt)
+    paste("Pensión mensual para el próximo año:", round(valores$pension_prox_rt, 2), "colones")
+  })
   
   
 }
