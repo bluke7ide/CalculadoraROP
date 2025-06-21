@@ -60,6 +60,8 @@ ui <- fluidPage(
                    
           ),
           tabPanel("Renta Permanente",
+                   h5(textOutput("pension_actual_rpmt")),
+                   h5(textOutput("pension_prox_rpmt")),
                    h4("Gráficos"),
                    plotlyOutput("graf_reserva3"),
                    plotlyOutput("graf_pension3")
@@ -95,6 +97,9 @@ server <- function(input, output) {
     valores$retiro_programado <- input$monto * 0.03
     valores$renta_permanente <- input$monto * 0.02
     valores$renta_temporal <- input$monto * 0.04
+    # Pensiones de renta permanente para mostrar
+
+    
     if (input$modo_tasa == "Aleatoria") {
       tasas_usuario <- intereses(input$edad)
     } else {
@@ -121,7 +126,8 @@ server <- function(input, output) {
     
     valores$pension_actual_rt <- sim2$Pension[1]
     valores$pension_prox_rt <- sim2$Pension[2]
-    
+    valores$pension_actual_rpmt <- sim3$Pension_Mensual[1]
+    valores$pension_prox_rpmt <- sim3$Pension_Mensual[2]
     
     # Guardar resultados
     valores$tabla_programado <- sim1
@@ -200,6 +206,16 @@ server <- function(input, output) {
   output$pension_prox_rt <- renderText({
     req(valores$pension_prox_rt)
     paste("Pensión mensual para el próximo año:", round(valores$pension_prox_rt, 2), "colones")
+  })
+  # Renta Permanente
+  output$pension_actual_rpmt <- renderText({
+    req(valores$pension_actual_rpmt)
+    paste("Pensión mensual para este año:", round(valores$pension_actual_rpmt, 2), "colones")
+  })
+  
+  output$pension_prox_rpmt <- renderText({
+    req(valores$pension_prox_rpmt)
+    paste("Pensión mensual para el próximo año:", round(valores$pension_prox_rpmt, 2), "colones")
   })
   
   
