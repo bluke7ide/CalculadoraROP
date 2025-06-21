@@ -1,12 +1,12 @@
 vanuTemporal <- function(edad_inicio, sexo, tabla, r = 0.036, m = 12, anno_objetivo = 2025) {
   # Obtener esperanza de vida a los 65 años
-  fila_ex65 <- tabla[tabla$edad == 65 & tabla$sex == sexo, ]
+  fila_ex65 <- tabla[tabla$edad == edad_inicio & tabla$sex == sexo, ]
   annos_disp <- unique(fila_ex65$year)
   anno_base <- annos_disp[which.min(abs(annos_disp - anno_objetivo))]
   ex65 <- fila_ex65$ex[fila_ex65$year == anno_base][1]
   resultados <- data.frame()
   for (edad in edad_inicio:90) {
-    n <- ceiling(ex65) - (edad - 65)
+    n <- ceiling(ex65) - (edad - edad_inicio)
     if (n <= 0) {
       resultados <- rbind(resultados, data.frame(Edad = edad, VANU_a_ex65 = 0))
       next
