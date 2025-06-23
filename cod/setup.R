@@ -10,9 +10,9 @@ pacman::p_load(
   
 )
 
-tabla <- read_excel("data/tavid2000-2150.xls")
+tabla <- read_excel("tavid2000-2150.xls")
 tabla <- as.data.frame(lapply(tabla, as.numeric), stringsAsFactors = FALSE)
 
-source("cod/retiro_programado.R")
-source("cod/renta_permanente.R")
-source("cod/intereses.R")
+source("retiro_programado.R")
+source("renta_permanente.R")
+source("intereses.R")

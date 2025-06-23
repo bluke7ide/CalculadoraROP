@@ -1,3 +1,4 @@
+source("setup.R")
 ui <- fluidPage(
   theme = bs_theme(
     version = 5, 
@@ -16,8 +17,8 @@ ui <- fluidPage(
       numericInput("monto", "Monto acumulado final:", value = 100000000, min = 0),
       numericInput("edad", "Edad actual:", value = 65, min = 18, max = 100),
       radioButtons("modo_tasa", "Modo de tasa de interés:",
-                   choices = c("Aleatoria", "Constante 3.6%"),
-                   selected = "Aleatoria",
+                   choices = c("Constante 3.6%", "Aleatoria", "Media estocástica"),
+                   selected = "Constante 3.6%",
                    inline = TRUE),
       selectInput("sexo", "Sexo:", choices = c("Masculino", "Femenino")),
       #numericInput("jub", "Año de jubilación:", value = 2025, min = 1950, max = 2100),
@@ -81,7 +82,7 @@ ui <- fluidPage(
           ),
           tabPanel("Tasas Estocásticas",
                    h4("Simulación de tasas de interés", style = "font-weight: bold;"),
-                   tags$img(src = "Rplot.png", style = "max-width:100%; height:auto;")
+                   tags$img(src = "rplot.png")
           )
         )
       )
@@ -119,8 +120,14 @@ server <- function(input, output) {
     
     if (input$modo_tasa == "Aleatoria") {
       tasas_usuario <- intereses(input$edad)
-    } else {
+    } else if(input$modo_tasa == "Constante 3.6%") {
       tasas_usuario <- rep(0.036, 115 - input$edad + 1)  # constante anual 3.6%
+    } else {
+      tasas_usuario <- read_csv("cod/media.csv", 
+                                col_names = c("tiempo", "media"),
+                                show_col_types = FALSE,
+                                skip = 1)
+      tasas_usuario <- tasas_usuario$media[1:(116-x)]
     }
     
     edad_retiro <- input$edad + (2025 - 2025)
