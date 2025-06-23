@@ -1,4 +1,8 @@
 ui <- fluidPage(
+  theme = bs_theme(
+    version = 5, 
+    bootswatch = "flatly",  # Otros: "minty", "cerulean", "cosmo", "lux"
+    primary = "#0073e6"),
   titlePanel(div("Calculadora del Régimen Obligatorio de Pensiones (ROP)", style = "background-color: #0073e6; color: white; padding: 10px; border-radius: 5px;")),
   
   sidebarLayout(
@@ -7,6 +11,7 @@ ui <- fluidPage(
       numericInput("r2023", "2023", value = 15203642, min = 18, max = 100),
       numericInput("r2024", "2024", value = 9546136, min = 18, max = 100),
       numericInput("r2025", "2025", value = 25462189, min = 18, max = 100),
+      hr(),
       h4("Características:", style = "font-weight: bold; color: #0073e6;"),
       numericInput("monto", "Monto acumulado final:", value = 100000000, min = 0),
       numericInput("edad", "Edad actual:", value = 65, min = 18, max = 100),
@@ -22,7 +27,12 @@ ui <- fluidPage(
     mainPanel(
       h3("Expectativa de vida", style = "font-weight: bold; color: #0073e6;"),
       textOutput("expectativa"),
-
+      br(),
+      fluidRow(
+        valueBoxOutput("vb_rp"),
+        valueBoxOutput("vb_rt"),
+        valueBoxOutput("vb_rpmt")
+      ),
       
       h3("Tipo de retiro", style = "font-weight: bold; margin-top: 30px; color: #0073e6;"),
       
@@ -45,26 +55,33 @@ ui <- fluidPage(
                    h5(textOutput("pension_actual_rp")),
                    h5(textOutput("pension_prox_rp")),
                    h4("Gráficos"),
-                   plotlyOutput("graf_reserva1"),
-                   plotlyOutput("graf_pension1")
-
+                   plotlyOutput("graf_reserva1") %>% withSpinner(color = "#0073e6"),
+                   plotlyOutput("graf_pension1") %>% withSpinner(color = "#0073e6"),
+                   downloadButton("descargar_tabla_rp", "Descargar tabla RP", class = "btn btn-outline-primary")
+                   
                    
           ),
           tabPanel("Renta Temporal",
                    h5(textOutput("pension_actual_rt")),
                    h5(textOutput("pension_prox_rt")),
                    h4("Gráficos"),
-                   plotlyOutput("graf_reserva2"),
-                   plotlyOutput("graf_pension2")
-
+                   plotlyOutput("graf_reserva2") %>% withSpinner(color = "#0073e6"),
+                   plotlyOutput("graf_pension2") %>% withSpinner(color = "#0073e6"),
+                   downloadButton("descargar_tabla_rt", "Descargar tabla RT", class = "btn btn-outline-primary")
+                   
                    
           ),
           tabPanel("Renta Permanente",
                    h5(textOutput("pension_actual_rpmt")),
                    h5(textOutput("pension_prox_rpmt")),
                    h4("Gráficos"),
-                   plotlyOutput("graf_reserva3"),
-                   plotlyOutput("graf_pension3")
+                   plotlyOutput("graf_reserva3") %>% withSpinner(color = "#0073e6"),
+                   plotlyOutput("graf_pension3") %>% withSpinner(color = "#0073e6"),
+                   downloadButton("descargar_tabla_rpmt", "Descargar tabla RPmt", class = "btn btn-outline-primary")
+          ),
+          tabPanel("Tasas Estocásticas",
+                   h4("Simulación de tasas de interés", style = "font-weight: bold;"),
+                   tags$img(src = "Rplot.png", style = "max-width:100%; height:auto;")
           )
         )
       )
@@ -217,6 +234,49 @@ server <- function(input, output) {
     req(valores$pension_prox_rpmt)
     paste("Pensión mensual para el próximo año:", round(valores$pension_prox_rpmt, 2), "colones")
   })
+  output$vb_rp <- renderValueBox({
+    req(valores$pension_actual_rp)
+    valueBox(
+      paste0("₡", format(round(valores$pension_actual_rp, 0), big.mark = ",")),
+      "Pensión Retiro Programado",
+      icon = icon("money-bill"),
+      color = "blue"
+    )
+  })
+  
+  output$vb_rt <- renderValueBox({
+    req(valores$pension_actual_rt)
+    valueBox(
+      paste0("₡", format(round(valores$pension_actual_rt, 0), big.mark = ",")),
+      "Pensión Renta Temporal",
+      icon = icon("clock"),
+      color = "teal"
+    )
+  })
+  
+  output$vb_rpmt <- renderValueBox({
+    req(valores$pension_actual_rpmt)
+    valueBox(
+      paste0("₡", format(round(valores$pension_actual_rpmt, 0), big.mark = ",")),
+      "Pensión Renta Permanente",
+      icon = icon("lock"),
+      color = "green"
+    )
+  })
+  output$descargar_tabla_rp <- downloadHandler(
+    filename = function() paste0("retiro_programado_", Sys.Date(), ".csv"),
+    content = function(file) write.csv(valores$tabla_programado, file, row.names = FALSE)
+  )
+  
+  output$descargar_tabla_rt <- downloadHandler(
+    filename = function() paste0("renta_temporal_", Sys.Date(), ".csv"),
+    content = function(file) write.csv(valores$tabla_temporal_sim, file, row.names = FALSE)
+  )
+  
+  output$descargar_tabla_rpmt <- downloadHandler(
+    filename = function() paste0("renta_permanente_", Sys.Date(), ".csv"),
+    content = function(file) write.csv(valores$tabla_temporal, file, row.names = FALSE)
+  )
   
   
 }

@@ -5,7 +5,7 @@ vanuTemporal <- function(edad_inicio, sexo, tabla, r = 0.036, m = 12, anno_objet
   anno_base <- annos_disp[which.min(abs(annos_disp - anno_objetivo))]
   ex65 <- fila_ex65$ex[fila_ex65$year == anno_base][1]
   resultados <- data.frame()
-  for (edad in edad_inicio:90) {
+  for (edad in edad_inicio:120) {
     n <- ceiling(ex65) - (edad - edad_inicio)
     if (n <= 0) {
       resultados <- rbind(resultados, data.frame(Edad = edad, VANU_a_ex65 = 0))
@@ -86,7 +86,7 @@ graficos <- function(resultados) {
   ))
 }
 
-simular_reserva <- function(reserva_inicial, vanus, tasas, minimo_ivm = 30638.35, edad_retiro = 65) {
+simular_reserva <- function(reserva_inicial, vanus, tasas, minimo_ivm = 31938.44, edad_retiro = 65) {
   n <- min(length(tasas), nrow(vanus))
   
   resultados <- data.frame(
@@ -130,7 +130,7 @@ intereses <- function(x){
   return(tasas)
 }
 
-simular_reserva_temporal <- function(reserva_inicial, vanus_temporal, tasas, minimo_ivm = 30638.35) {
+simular_reserva_temporal <- function(reserva_inicial, vanus_temporal, tasas, minimo_ivm = 31938.44) {
   n <- nrow(vanus_temporal)
   resultados <- data.frame(
     Edad = vanus_temporal$Edad,

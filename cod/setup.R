@@ -3,7 +3,11 @@ pacman::p_load(
   ggplot2,
   plotly,
   shiny,
-  readxl
+  readxl,
+  bslib,
+  shinycssloaders,
+  shinydashboard
+  
 )
 
 tabla <- read_excel("data/tavid2000-2150.xls")
