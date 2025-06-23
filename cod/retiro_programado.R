@@ -5,7 +5,7 @@ vanuTemporal <- function(edad_inicio, sexo, tabla, r = 0.036, m = 12, anno_objet
   anno_base <- annos_disp[which.min(abs(annos_disp - anno_objetivo))]
   ex65 <- fila_ex65$ex[fila_ex65$year == anno_base][1]
   resultados <- data.frame()
-  for (edad in edad_inicio:120) {
+  for (edad in edad_inicio:(ex65+edad_inicio)) {
     n <- ceiling(ex65) - (edad - edad_inicio)
     if (n <= 0) {
       resultados <- rbind(resultados, data.frame(Edad = edad, VANU_a_ex65 = 0))
