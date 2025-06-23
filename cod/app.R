@@ -81,8 +81,7 @@ ui <- fluidPage(
                    downloadButton("descargar_tabla_rpmt", "Descargar tabla RPmt", class = "btn btn-outline-primary")
           ),
           tabPanel("Tasas Estocásticas",
-                   h4("Simulación de tasas de interés", style = "font-weight: bold;"),
-                   tags$img(src = "rplot.png")
+                   tags$img(src = "rplot.png", style = "max-width:60%; height:40%;")
           )
         )
       )
@@ -123,7 +122,7 @@ server <- function(input, output) {
     } else if(input$modo_tasa == "Constante 3.6%") {
       tasas_usuario <- rep(0.036, 115 - input$edad + 1)  # constante anual 3.6%
     } else {
-      tasas_usuario <- read_csv("cod/media.csv", 
+      tasas_usuario <- read_csv("media.csv", 
                                 col_names = c("tiempo", "media"),
                                 show_col_types = FALSE,
                                 skip = 1)

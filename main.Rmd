@@ -1,8 +1,0 @@
----
-title: "main"
-output: html_document
----
-
-```{r, message=FALSE, warning=FALSE}
-runApp('cod')
-```

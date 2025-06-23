@@ -46,5 +46,5 @@ fig <- ggplot() +
        x = "Tiempo", y = "Porcentaje de interés") +
   theme_minimal() 
 
-ggsave("cod/rplot.png", fig)
+ggsave("cod/www/rplot.png", fig)
 write.csv(df_res$Media/100, "cod/media.csv")
