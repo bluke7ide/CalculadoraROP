@@ -16,6 +16,9 @@ renta_permanente <- function(rendimientos, x, monto, año_jub, vec_rend){ # no s
     res$res_inicial[i] <- res$Reserva_Final[i-1]
     res$Rendimientos[i] <- (res$res_inicial[i]-6*res$Pension_Mensual[i])*res$tasa[i]
     res$Reserva_Final[i] <- res$res_inicial[i] + res$Rendimientos[i] - 12*res$Pension_Mensual[i]
+    if(res$Reserva_Final[i] <=0){
+      break
+    }
   }
   return(res)
 }

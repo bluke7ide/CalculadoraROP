@@ -81,6 +81,8 @@ ui <- fluidPage(
                    downloadButton("descargar_tabla_rpmt", "Descargar tabla RPmt", class = "btn btn-outline-primary")
           ),
           tabPanel("Tasas Estocásticas",
+                   h4("Simulaciones de tasas de interés"),
+                   p("Simulando 1000 trayectorias de tasas de interés, se calcula el promedio de estos movimientos y se obtiene la tasa de interés de la media estocástica, que es una de las tres opciones de las tasas a visualizar"),
                    tags$img(src = "rplot.png", style = "max-width:60%; height:40%;")
           )
         )
