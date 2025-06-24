@@ -9,12 +9,12 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       h4("Montos de los rendimientos de los años:", style = "font-weight: bold; color: #0073e6;"),
-      numericInput("r2023", "2023", value = 15203642, min = 18, max = 100),
-      numericInput("r2024", "2024", value = 9546136, min = 18, max = 100),
-      numericInput("r2025", "2025", value = 25462189, min = 18, max = 100),
+      numericInput("r2023", "2023", value = 0),
+      numericInput("r2024", "2024", value = 0),
+      numericInput("r2025", "2025", value = 0),
       hr(),
       h4("Características:", style = "font-weight: bold; color: #0073e6;"),
-      numericInput("monto", "Monto acumulado final:", value = 100000000, min = 0),
+      numericInput("monto", "Monto acumulado final:", value = 0, min = 0),
       numericInput("edad", "Edad actual:", value = 65, min = 18, max = 100),
       radioButtons("modo_tasa", "Modo de tasa de interés:",
                    choices = c("Constante 3.6%", "Aleatoria", "Media estocástica"),
